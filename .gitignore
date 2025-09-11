@@ -1,0 +1,40 @@
+creds.json
+
+# Python bytecode and cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environment folders (if you use venv or env)
+venv/
+env/
+
+# VSCode or other IDE settings
+.vscode/
+
+# Environment variables file (keeps API keys and secrets safe)
+.env
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# PyInstaller files (if used)
+*.spec
+build/
+dist/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Local SQLite databases (if any)
+*.sqlite3
+
+# Flask session file storage (if used)
+flask_session/
+
+# Node modules (if you ever add frontend stuff with npm/yarn)
+node_modules/
