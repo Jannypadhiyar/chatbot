@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Land Dealer Chatbot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-box" id="chat-box"></div>
+
+        <div class="input-area">
+            <input type="text" id="user-input" placeholder="Type your message..." autocomplete="off" />
+            <button onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+<script>
+    function sendMessage() {
+        const input = document.getElementById("user-input");
+        const msg = input.value.trim();
+        if (!msg) return;
+
+        appendMessage("user", msg);
+        input.value = "";
+        input.focus();
+
+        fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: msg })
+        })
+        .then(res => res.json())
+        .then(data => {
+            // Remove any existing image options before showing new messages
+            const existingOptions = document.querySelectorAll(".image-options");
+            existingOptions.forEach(e => e.remove());
+
+            if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+                // Multiple images - show options
+                appendMessage("bot", data.reply);
+                appendImageOptions(data.images);
+            } else if (data.image) {
+                // Single image with info below
+                appendMessage("bot", data.reply, data.image);
+            } else {
+                // Just text reply
+                appendMessage("bot", data.reply);
+            }
+        })
+        .catch(() => {
+            appendMessage("bot", "Sorry, something went wrong. Please try again.");
+        });
+    }
+
+    function appendMessage(sender, text, image = null) {
+        const chatBox = document.getElementById("chat-box");
+        const msgDiv = document.createElement("div");
+        msgDiv.classList.add("message", sender);
+
+        const avatar = document.createElement("div");
+        avatar.classList.add("avatar");
+        const img = document.createElement("img");
+        img.src = sender === "bot" ? "/static/images/bot.png" : "/static/images/user.png";
+        avatar.appendChild(img);
+
+        const bubble = document.createElement("div");
+        bubble.classList.add("bubble");
+        bubble.innerHTML = text.replace(/\n/g, "<br>");
+
+        msgDiv.appendChild(avatar);
+        msgDiv.appendChild(bubble);
+
+        if (image) {
+            const container = document.createElement("div");
+            container.style.display = "flex";
+            container.style.flexDirection = sender === "bot" ? "column" : "column";
+            container.style.alignItems = sender === "bot" ? "flex-end" : "flex-start";
+            container.style.marginLeft = sender === "user" ? "50px" : "0";
+            container.style.marginRight = sender === "bot" ? "50px" : "0";
+
+            const propertyImg = document.createElement("img");
+            propertyImg.src = image;
+            propertyImg.classList.add("property-img");
+
+            const infoDiv = document.createElement("div");
+            infoDiv.classList.add("property-info");
+            infoDiv.textContent = text;  // Show info text below image for user click
+
+            // Remove text from bubble since info is below image
+            bubble.innerHTML = "";
+
+            container.appendChild(propertyImg);
+            container.appendChild(infoDiv);
+            msgDiv.appendChild(container);
+        }
+
+        chatBox.appendChild(msgDiv);
+        
+            chatBox.scrollTo({ top: chatBox.scrollHeight, behaviour: 'smooth'});
+    }
+
+    function appendImageOptions(images) {
+        const chatBox = document.getElementById("chat-box");
+
+        const optionsDiv = document.createElement("div");
+        optionsDiv.classList.add("image-options");
+
+        images.forEach((imgUrl, index) => {
+            const imgEl = document.createElement("img");
+            imgEl.src = imgUrl;
+            imgEl.alt = `Option ${index + 1}`;
+            imgEl.title = `Option ${index + 1}`;
+            imgEl.onclick = () => {
+                appendMessage("user", `Option ${index + 1}`);
+                fetch("/chat", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ message: `${index + 1}` })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    // Remove old image options before showing new reply
+                    const existingOptions = document.querySelectorAll(".image-options");
+                    existingOptions.forEach(e => e.remove());
+
+                    if (data.images && Array.isArray(data.images) && data.images.length > 0) {
+                        appendMessage("bot", data.reply);
+                        appendImageOptions(data.images);
+                    } else if (data.image) {
+                        appendMessage("bot", data.reply, data.image);
+                    } else {
+                        appendMessage("bot", data.reply);
+                    }
+                });
+            };
+            optionsDiv.appendChild(imgEl);
+        });
+
+        chatBox.appendChild(optionsDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // No auto greeting on load; wait for user to say hello first.
+</script>
+</body>
+</html>
