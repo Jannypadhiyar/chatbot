@@ -26,7 +26,6 @@
         appendMessage("user", msg);
         input.value = "";
         input.blur();
-        input.focus();
 
         fetch("/chat", {
             method: "POST",
